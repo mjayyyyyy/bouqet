@@ -55,23 +55,28 @@ function createSparkles() {
     }
 }
 
-// ---- Save Page Image (Clean canvas rendering for direct download) ----
+// ---- Save Page Image (Clean, high-fidelity capture config) ----
 saveBtn.addEventListener('click', () => {
     saveBtn.style.opacity = '0';
     petalsContainer.style.display = 'none';
     sparklesContainer.style.display = 'none';
 
+    // Small delay to let UI updates register
     setTimeout(() => {
         if (typeof html2canvas !== 'undefined') {
             html2canvas(giftWrapper, {
-                useCORS: true,         // Allows remote server assets on live site
-                allowTaint: true,       // Essential for local testing fallback
-                scale: 2,              // Double resolution for high-quality images
+                useCORS: true,         // Allows loading images correctly on GitHub Pages
+                allowTaint: false,      // Disabling allowTaint prevents distorted canvas contexts
+                scale: 2,              // Double resolution
                 backgroundColor: '#f3f9f3',
-                logging: false
+                logging: false,
+                scrollX: 0,
+                scrollY: -window.scrollY, // Corrects offset coordinates when scrolled down
+                windowWidth: document.documentElement.offsetWidth,
+                windowHeight: document.documentElement.offsetHeight
             }).then(canvas => {
                 // Instantly generate and trigger direct file download 
-                const image = canvas.toDataURL("image/png").replace("image/png", "image/octet-stream");
+                const image = canvas.toDataURL("image/png");
                 const link = document.createElement("a");
                 link.download = "bouquet-for-mheg.png";
                 link.href = image;
