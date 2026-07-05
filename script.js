@@ -55,7 +55,7 @@ function createSparkles() {
     }
 }
 
-// ---- Save Page Image (Using absolute local file protocol fallback wrapper) ----
+// ---- Save Page Image (Guaranteed Direct Download on Live GitHub Pages URL) ----
 saveBtn.addEventListener('click', () => {
     saveBtn.style.opacity = '0';
     petalsContainer.style.display = 'none';
@@ -64,79 +64,33 @@ saveBtn.addEventListener('click', () => {
     setTimeout(() => {
         if (typeof html2canvas !== 'undefined') {
             html2canvas(giftWrapper, {
-                useCORS: false,
-                allowTaint: true,
+                useCORS: true,         // Enabled CORS - critical for downloading when hosted on github.io!
+                allowTaint: false,      // Disabled taint so canvas remains secure and exportable
                 scale: 2,
                 backgroundColor: '#f3f9f3',
-                logging: true
+                logging: false
             }).then(canvas => {
                 try {
+                    // Standard Download method using anchor elements
                     const dataUrl = canvas.toDataURL("image/png");
+                    const link = document.createElement("a");
+                    link.download = "bouquet-for-mheg.png";
+                    link.href = dataUrl;
                     
-                    // Direct Window Pop-up injection: Force render in tab. 
-                    // This is the only 100% successful bypass on file:// protocol for all devices.
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                } catch(e) {
+                    console.error("Direct download link trigger failed: ", e);
+                    // Fallback popup if browser blocks download
                     const win = window.open();
                     if (win) {
-                        win.document.write(`
-                            <html>
-                            <head>
-                                <title>Your Bouquet Image</title>
-                                <style>
-                                    body {
-                                        background-color: #f3f9f3;
-                                        margin: 0;
-                                        display: flex;
-                                        flex-direction: column;
-                                        align-items: center;
-                                        justify-content: center;
-                                        min-height: 100vh;
-                                        font-family: sans-serif;
-                                    }
-                                    .container {
-                                        text-align: center;
-                                        padding: 20px;
-                                    }
-                                    img {
-                                        max-width: 90%;
-                                        max-height: 80vh;
-                                        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-                                        border-radius: 12px;
-                                        border: 4px solid white;
-                                    }
-                                    p {
-                                        color: #2d3e2d;
-                                        font-size: 18px;
-                                        margin-top: 20px;
-                                        font-weight: 500;
-                                    }
-                                    .note {
-                                        font-size: 14px;
-                                        color: #6b826b;
-                                        margin-top: 5px;
-                                    }
-                                </style>
-                            </head>
-                            <body>
-                                <div class="container">
-                                    <img src="${dataUrl}" alt="Bouquet for Mheg">
-                                    <p>🌸 Long press or right-click the image to save it! 🌸</p>
-                                    <div class="note">(Saved to your clipboard / Save Image As)</div>
-                                </div>
-                            </body>
-                            </html>
-                        `);
-                        win.document.close();
-                    } else {
-                        // Alert fallback if popups are fully blocked
-                        alert("Please check your browser toolbar and allow Pop-ups for this local file so we can display your image to save.");
+                        win.document.write('<p style="font-family:sans-serif; text-align:center; color:#2d3e2d;">🌸 Long-press or right-click to save your image! 🌸</p><img src="' + canvas.toDataURL("image/png") + '" style="display:block; margin:20px auto; max-width:90%; border-radius:12px; box-shadow:0 10px 30px rgba(0,0,0,0.1); border:4px solid white;"/>');
                     }
-                } catch(e) {
-                    console.error("Direct popup injection failed: ", e);
-                    alert("Unable to generate image locally. Try opening the page in a normal web server (e.g. running via a local host).");
                 }
                 restoreStyles();
             }).catch(err => {
-                console.error("Capture failure: ", err);
+                console.error("html2canvas generation error: ", err);
                 restoreStyles();
             });
         } else {
