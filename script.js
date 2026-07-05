@@ -55,39 +55,49 @@ function createSparkles() {
     }
 }
 
-// ---- Save Page Image (Clean, high-fidelity capture config) ----
+// ---- Save Page Image (Clean capture config) ----
 saveBtn.addEventListener('click', () => {
     saveBtn.style.opacity = '0';
     petalsContainer.style.display = 'none';
     sparklesContainer.style.display = 'none';
 
-    // Small delay to let UI updates register
+    // Wait a brief moment for styles to change
     setTimeout(() => {
         if (typeof html2canvas !== 'undefined') {
+            // Force scroll to top so html2canvas compiles absolute screen coordinates correctly
+            const currentScroll = window.scrollY;
+            window.scrollTo(0, 0);
+
             html2canvas(giftWrapper, {
-                useCORS: true,         // Allows loading images correctly on GitHub Pages
-                allowTaint: false,      // Disabling allowTaint prevents distorted canvas contexts
-                scale: 2,              // Double resolution
+                useCORS: true,
+                allowTaint: false,
+                scale: 3,                 // Set to 3 for ultra-clear high-definition snapshot output
                 backgroundColor: '#f3f9f3',
                 logging: false,
+                width: giftWrapper.offsetWidth,
+                height: giftWrapper.offsetHeight,
                 scrollX: 0,
-                scrollY: -window.scrollY, // Corrects offset coordinates when scrolled down
-                windowWidth: document.documentElement.offsetWidth,
-                windowHeight: document.documentElement.offsetHeight
+                scrollY: 0
             }).then(canvas => {
-                // Instantly generate and trigger direct file download 
-                const image = canvas.toDataURL("image/png");
-                const link = document.createElement("a");
-                link.download = "bouquet-for-mheg.png";
-                link.href = image;
-                
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-                
+                // Restore user's original scroll position
+                window.scrollTo(0, currentScroll);
+
+                try {
+                    const image = canvas.toDataURL("image/png");
+                    const link = document.createElement("a");
+                    link.download = "bouquet-for-mheg.png";
+                    link.href = image;
+                    
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                } catch(e) {
+                    console.error("Direct download link trigger failed: ", e);
+                }
                 restoreStyles();
             }).catch(err => {
-                console.error("Capture failure: ", err);
+                window.scrollTo(0, currentScroll);
+                console.error("html2canvas generation error: ", err);
                 restoreStyles();
             });
         } else {
