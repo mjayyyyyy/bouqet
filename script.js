@@ -55,7 +55,7 @@ function createSparkles() {
     }
 }
 
-// ---- Save Page Image (Guaranteed Direct Download on Live GitHub Pages URL) ----
+// ---- Save Page Image (Clean canvas rendering for direct download) ----
 saveBtn.addEventListener('click', () => {
     saveBtn.style.opacity = '0';
     petalsContainer.style.display = 'none';
@@ -64,33 +64,25 @@ saveBtn.addEventListener('click', () => {
     setTimeout(() => {
         if (typeof html2canvas !== 'undefined') {
             html2canvas(giftWrapper, {
-                useCORS: true,         // Enabled CORS - critical for downloading when hosted on github.io!
-                allowTaint: false,      // Disabled taint so canvas remains secure and exportable
-                scale: 2,
+                useCORS: true,         // Allows remote server assets on live site
+                allowTaint: true,       // Essential for local testing fallback
+                scale: 2,              // Double resolution for high-quality images
                 backgroundColor: '#f3f9f3',
                 logging: false
             }).then(canvas => {
-                try {
-                    // Standard Download method using anchor elements
-                    const dataUrl = canvas.toDataURL("image/png");
-                    const link = document.createElement("a");
-                    link.download = "bouquet-for-mheg.png";
-                    link.href = dataUrl;
-                    
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
-                } catch(e) {
-                    console.error("Direct download link trigger failed: ", e);
-                    // Fallback popup if browser blocks download
-                    const win = window.open();
-                    if (win) {
-                        win.document.write('<p style="font-family:sans-serif; text-align:center; color:#2d3e2d;">🌸 Long-press or right-click to save your image! 🌸</p><img src="' + canvas.toDataURL("image/png") + '" style="display:block; margin:20px auto; max-width:90%; border-radius:12px; box-shadow:0 10px 30px rgba(0,0,0,0.1); border:4px solid white;"/>');
-                    }
-                }
+                // Instantly generate and trigger direct file download 
+                const image = canvas.toDataURL("image/png").replace("image/png", "image/octet-stream");
+                const link = document.createElement("a");
+                link.download = "bouquet-for-mheg.png";
+                link.href = image;
+                
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                
                 restoreStyles();
             }).catch(err => {
-                console.error("html2canvas generation error: ", err);
+                console.error("Capture failure: ", err);
                 restoreStyles();
             });
         } else {
